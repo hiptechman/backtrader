@@ -26,6 +26,7 @@ import copy
 import datetime
 import inspect
 import itertools
+import math
 import operator
 
 from .utils.py3 import (filter, keys, integer_types, iteritems, itervalues,
@@ -1288,7 +1289,7 @@ class Strategy(with_metaclass(MetaStrategy, StrategyBase)):
         The current ``value`` is taken into account as the start point to
         achieve ``target``
 
-          - If no ``target`` then close postion on data
+          - If no ``target`` then close position on data
           - If ``target`` > ``value`` then buy on data
           - If ``target`` < ``value`` then sell on data
 
@@ -1374,6 +1375,54 @@ class Strategy(with_metaclass(MetaStrategy, StrategyBase)):
         target *= self.broker.getvalue()
 
         return self.order_target_value(data=data, target=target, **kwargs)
+
+    def order_percent_buy_power(self, data=None, price=None, target=0.0, *kwargs):
+        '''
+        Place an order that uses only ``target`` percent of current buying
+        power
+
+        ``target`` is expressed in decimal: ``0.05`` -> ``5%``
+
+        Example: 
+          - ``target=0.05`` and buying power is ``$10000``
+
+          - The buying power to be provided is ``$500``
+        '''
+        if isinstance(data, string_types):
+            data = self.getdatabyname(data)
+        elif data is None:
+            data = self.data
+
+        # Make sure a price is there
+        price = price if price is not None else data.close[0]
+        buy_power = self.broker.get_cash()
+        buy_power = buy_power * target
+
+        comminfo = self.broker.getcommissioninfo(data)
+        size = comminfo.getsize(price, buy_power)
+
+        return self.buy(data=data, size=size, price=price)
+
+    def sell_percent_shares(self, data=None, target=0.0, **kwargs):
+        '''
+        Place a sell order that only shares ``target`` percent of shares owned.
+
+         ``target`` is expressed in decimal: ``0.05`` -> ``5%``
+
+         Example:
+              - ``target=0.5`` and we own 40 shares of NVDA
+
+              - The amount of NVDA shares to be sold will be 20
+        '''
+        if isinstance(data, string_types):
+            data = self.getdatabyname(data)
+        elif data is None:
+            data = self.data
+
+        possize = int(math.floor(target * self.getposition(data, self.broker).size))
+
+        return self.sell(data=data, size=possize)
+
 
     def getposition(self, data=None, broker=None):
         '''

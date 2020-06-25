@@ -1383,7 +1383,7 @@ class Strategy(with_metaclass(MetaStrategy, StrategyBase)):
 
         ``target`` is expressed in decimal: ``0.05`` -> ``5%``
 
-        Example: 
+        Example:
           - ``target=0.05`` and buying power is ``$10000``
 
           - The buying power to be provided is ``$500``
@@ -1394,7 +1394,7 @@ class Strategy(with_metaclass(MetaStrategy, StrategyBase)):
             data = self.data
 
         # Make sure a price is there
-        price = price if price is not None else data.close[0]
+        price = price if price is not None else data.open[0]
         buy_power = self.broker.get_cash()
         buy_power = buy_power * target
 
@@ -1403,7 +1403,7 @@ class Strategy(with_metaclass(MetaStrategy, StrategyBase)):
 
         return self.buy(data=data, size=size, price=price)
 
-    def sell_percent_shares(self, data=None, target=0.0, **kwargs):
+    def sell_percent_shares(self, data=None, target=0.0, price=None, **kwargs):
         '''
         Place a sell order that only shares ``target`` percent of shares owned.
 
@@ -1420,8 +1420,8 @@ class Strategy(with_metaclass(MetaStrategy, StrategyBase)):
             data = self.data
 
         possize = int(math.floor(target * self.getposition(data, self.broker).size))
-
-        return self.sell(data=data, size=possize)
+        price = price if price is not None else data.open[0]
+        return self.sell(data=data, size=possize, price=price)
 
 
     def getposition(self, data=None, broker=None):

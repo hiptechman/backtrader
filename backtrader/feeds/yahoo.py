@@ -82,7 +82,7 @@ class YahooFinanceCSVData(feed.CSVDataBase):
 
     params = (
         ('reverse', False),
-        ('adjclose', False),
+        ('adjclose', True),
         ('adjvolume', True),
         ('round', True),
         ('decimals', 2),
@@ -136,13 +136,14 @@ class YahooFinanceCSVData(feed.CSVDataBase):
         c = float(linetokens[next(i)])
         self.lines.openinterest[0] = 0.0
 
-        # 2018-11-16 ... Adjusted Close seems to always be delivered after
-        # the close and before the volume columns
-        adjustedclose = float(linetokens[next(i)])
         try:
             v = float(linetokens[next(i)])
         except:  # cover the case in which volume is "null"
             v = 0.0
+
+        # 2018-11-16 ... Adjusted Close seems to always be delivered after
+        # the close and before the volume columns
+        adjustedclose = float(linetokens[next(i)])
 
         if self.p.swapcloses:  # swap closing prices if requested
             c, adjustedclose = adjustedclose, c
